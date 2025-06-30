@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { RootState } from "@/store";
 import { decrement, increment, incrementByAmount } from "@/store/counter-slice";
-import type { RootState } from "@/store/types";
 import { useSelector, useDispatch } from "react-redux";
 
 function Counter() {

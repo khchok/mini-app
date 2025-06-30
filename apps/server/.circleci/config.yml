@@ -1,0 +1,40 @@
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+jobs:
+  test:
+    docker:
+      - image: circleci/node:16
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v2-dependencies-{{ checksum "pnpm-lock.yaml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v2-dependencies-
+      - run: pnpm install --frozen-lockfile
+      - save_cache:
+          paths:
+            - node_modules
+            - ~/.cache/pnpm
+          key: v2-dependencies-{{ checksum "pnpm-lock.yaml" }}
+      - run:
+          name: Build
+          command: pnpm run build
+      - run:
+          name: Check linting
+          command: pnpm run lint
+      - run:
+          name: Validate prettiness
+          command: pnpm run validate-prettiness
+      - run:
+          name: Run unit tests
+          command: pnpm run test
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
