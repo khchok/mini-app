@@ -11,13 +11,12 @@
     "build": "pnpm run --parallel build",
     "build:server": "pnpm --filter server build",
     "build:web": "pnpm --filter web build",
+    "prod:web": "pnpm --filter web vercel-deploy",
+    "prod:server": "pnpm --filter server vercel-deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.5.2",
-  "devDependencies": {
-    "@vercel/node": "^3.0.0"
-  }
+  "packageManager": "pnpm@10.5.2"
 }

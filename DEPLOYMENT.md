@@ -1,130 +1,107 @@
-# Vercel Deployment Guide
+# 🚀 Separate Domain Deployment Guide
 
-This guide explains how to deploy your monorepo to Vercel with your React frontend and Express.js API on the same domain, **maintaining your clean monorepo structure**.
+Your monorepo is now configured for **separate deployments** with each app running on its own domain as independent applications.
 
-## 🎯 Deployment Result
+## 🎯 **Deployment Architecture**
 
-After deployment, you'll have:
-- **Frontend**: `https://your-app.vercel.app`
-- **API**: `https://your-app.vercel.app/api/items`
-- **API Documentation**: `https://your-app.vercel.app/api/api-docs`
+✅ **Frontend (React)**: `https://your-frontend.vercel.app`
+✅ **API Server (Express.js)**: `https://your-api.vercel.app`
+✅ **Separate domains** for different behaviors
+✅ **Clean monorepo structure** preserved
 
-## 📁 Monorepo Structure (Preserved!)
+## 🏗️ **Project Structure**
 
-Your clean monorepo structure remains **completely intact**:
 ```
 mini-app/
 ├── apps/
-│   ├── server/          # Express.js API (deployed as full Node.js app)
-│   └── web/             # React frontend (deployed as static site)
-├── package.json         # Root monorepo config
-├── vercel.json          # Deployment config
-└── pnpm-workspace.yaml  # Workspace config
+│   ├── server/                    # Express.js API Server
+│   │   ├── api/
+│   │   │   └── index.ts          # Vercel entry point
+│   │   ├── src/
+│   │   │   ├── app.ts            # Express app
+│   │   │   ├── controllers/      # API controllers
+│   │   │   ├── routes/           # API routes
+│   │   │   └── models/           # Data models
+│   │   ├── vercel.json           # Server deployment config
+│   │   └── package.json          # Server dependencies
+│   └── web/                      # React Frontend
+│       ├── src/                  # React components
+│       ├── vercel.json           # Frontend deployment config
+│       ├── package.json          # Frontend dependencies
+│       └── dist/                 # Build output
+├── package.json                  # Root monorepo config
+└── pnpm-workspace.yaml          # Workspace config
 ```
 
-## 🚀 How It Works
+## ⚙️ **Deployment Configurations**
 
-### 1. **Full Node.js Deployment (Not Serverless!)**
-- Your Express.js app runs as a **complete Node.js application**
-- No serverless functions or code duplication
-- Your existing controllers, routes, and middleware work unchanged
-
-### 2. **Smart Routing**
-- Frontend serves from root: `/`, `/about`, etc.
-- API routes automatically go to: `/api/*`
-- Same domain, different backends
-
-### 3. **Environment-Aware**
-- **Development**: Server runs on `localhost:3000`, Web on `localhost:3333`
-- **Production**: Both on same Vercel domain with `/api` routing
-
-## 🛠️ What We've Set Up
-
-### 1. **vercel.json** - Monorepo Deployment Config
+### **Frontend (`apps/web/vercel.json`)**
 ```json
 {
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install",
+  "framework": null
+}
+```
+- Deploys React app as static site
+- Builds using Vite
+- Serves from `dist` directory
+
+### **API Server (`apps/server/vercel.json`)**
+```json
+{
+  "version": 2,
   "builds": [
     {
-      "src": "apps/web/package.json",      // React app build
-      "use": "@vercel/static-build"
-    },
-    {
-      "src": "apps/server/vercel-entry.ts", // Express app entry
-      "use": "@vercel/node"                 // Full Node.js runtime
+      "src": "api/index.ts",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
-    { "src": "/api/(.*)", "dest": "apps/server/vercel-entry.ts" },
-    { "src": "/(.*)", "dest": "apps/web/dist/$1" }
+    {
+      "src": "/(.*)",
+      "dest": "api/index.ts"
+    }
   ]
 }
 ```
+- Deploys Express.js as full Node.js application
+- Uses `api/index.ts` as entry point
+- Routes all requests to Express app
 
-### 2. **apps/server/vercel-entry.ts** - Clean Entry Point
-- Simple wrapper that exports your Express app
-- No code duplication
-- Vercel handles the server part
+## 🚀 **Deployment Steps**
 
-### 3. **Updated apps/server/src/app.ts**
-- Added CORS headers for production
-- Environment-aware routing (dev vs production)
-- Your existing code unchanged
-
-## 🚀 Deployment Steps
-
-### Step 1: Install Dependencies
+### **Step 1: Deploy Frontend**
 ```bash
-pnpm install
+# Navigate to frontend app
+cd apps/web
+
+# Deploy to Vercel
+vercel --prod
+
+# Result: https://your-frontend.vercel.app
 ```
 
-### Step 2: Test Local Build
+### **Step 2: Deploy API Server**
 ```bash
-# Test web build
-pnpm run build:web
+# Navigate to server app
+cd apps/server
 
-# Test server build  
-pnpm run build:server
+# Deploy to Vercel
+vercel --prod
+
+# Result: https://your-api.vercel.app
 ```
 
-### Step 3: Deploy to Vercel
-```bash
-# Install Vercel CLI (if needed)
-npm i -g vercel
-
-# Login to Vercel
-vercel login
-
-# Deploy from monorepo root
-vercel
-```
-
-## 🧪 Testing Your Deployment
-
-After deployment, test these endpoints:
-
-```bash
-# Frontend
-curl https://your-app.vercel.app
-
-# API endpoints (your existing routes work!)
-curl https://your-app.vercel.app/api/items
-curl -X POST https://your-app.vercel.app/api/items \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Test Item"}'
-
-# API Documentation
-open https://your-app.vercel.app/api/api-docs
-```
-
-## 🔗 Using API in Your React App
-
-Your existing API calls work with minimal changes:
+### **Step 3: Update Frontend API Configuration**
+Update your frontend to point to the API server domain:
 
 ```typescript
 // apps/web/src/lib/api.ts
 const API_BASE = process.env.NODE_ENV === 'production' 
-  ? '' // Same domain in production
-  : 'http://localhost:3000'; // Local server in development
+  ? 'https://your-api.vercel.app'  // Your API server domain
+  : 'http://localhost:3000';       // Local development
 
 export const api = {
   async getItems() {
@@ -136,63 +113,108 @@ export const api = {
     const response = await fetch(`${API_BASE}/api/items`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name }),
     });
     return response.json();
-  }
+  },
 };
 ```
 
-## ✅ Advantages of This Approach
+## 🧪 **Testing Deployments**
 
-1. **🏗️ Preserves Monorepo Structure** - No pollution of root directory
-2. **🚀 Full Express.js App** - Not serverless, your app runs normally
-3. **🔄 Same Domain** - `your-app.vercel.app` + `/api` path
-4. **💻 Zero Code Changes** - Your existing Express routes work as-is
-5. **🔧 Easy Development** - Same dev workflow, just deploy when ready
-6. **📈 Performance** - Full Node.js app, no cold starts
-7. **🛠️ Full Express Features** - Middleware, static files, everything works
+### **Test Frontend**
+```bash
+curl https://your-frontend.vercel.app/
+# Should return React app HTML
+```
 
-## 🔧 Development vs Production
+### **Test API Server**
+```bash
+# Health check
+curl https://your-api.vercel.app/
 
-### Local Development (Unchanged!)
+# API endpoints
+curl https://your-api.vercel.app/api/items
+curl -X POST https://your-api.vercel.app/api/items \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Test Item"}'
+
+# API Documentation
+open https://your-api.vercel.app/api-docs
+```
+
+## 🔧 **Environment Variables**
+
+### **Frontend Environment Variables**
+Set in your frontend Vercel project:
+- `VITE_API_URL`: Your API server domain
+- Any other frontend-specific variables
+
+### **API Server Environment Variables**
+Set in your API server Vercel project:
+- `API_DOMAIN`: Your API server domain for Swagger docs
+- `NODE_ENV`: Set to `production`
+- Any database connection strings or API keys
+
+## 💻 **Local Development**
+
+Development workflow remains the same:
+
 ```bash
 # Terminal 1: Start API server
 pnpm run dev:server  # http://localhost:3000
 
-# Terminal 2: Start web app  
+# Terminal 2: Start frontend
 pnpm run dev:web     # http://localhost:3333
 ```
 
-### Production (Vercel)
-- **Frontend**: `https://your-app.vercel.app`
-- **API**: `https://your-app.vercel.app/api/*`
-- **Same domain, automatic routing** ✨
+## ✅ **Benefits of Separate Deployments**
 
-## 🌐 Alternative: Subdomain Approach
+1. **🎯 Different Behaviors**: Each app optimized for its purpose
+   - Frontend: Static site with CDN optimization
+   - API: Full Node.js server with persistent connections
 
-If you still prefer `api.your-domain.com`:
+2. **🚀 Independent Scaling**: Scale frontend and API separately
 
-1. **Deploy server separately**:
-   ```bash
-   cd apps/server
-   vercel --prod
-   ```
+3. **🔧 Independent Deployments**: Deploy frontend and API independently
 
-2. **Add custom domain** in Vercel dashboard
+4. **🛡️ Better Security**: Separate domains, different access controls
 
-3. **Update frontend API calls**:
-   ```typescript
-   const API_BASE = 'https://api.your-domain.com';
-   ```
+5. **📊 Better Monitoring**: Separate metrics and logs for each service
 
-## 📝 Key Benefits
+6. **🌍 Geographic Distribution**: Deploy to different regions if needed
 
-- ✅ **Monorepo structure preserved**
-- ✅ **No serverless complications**  
-- ✅ **Same domain `/api` path**
-- ✅ **Full Express.js functionality**
-- ✅ **Zero code changes required**
-- ✅ **Clean separation of concerns**
+## 🎨 **Custom Domains (Optional)**
 
-Your Express.js app runs exactly as it does locally, just hosted on Vercel! 🎉 
+### **Frontend Custom Domain**
+1. Add custom domain in frontend Vercel project
+2. Configure DNS: `your-app.com` → frontend deployment
+
+### **API Custom Domain**
+1. Add custom domain in API Vercel project  
+2. Configure DNS: `api.your-app.com` → API deployment
+
+### **Update Frontend Configuration**
+```typescript
+const API_BASE = process.env.NODE_ENV === 'production' 
+  ? 'https://api.your-app.com'    // Custom API domain
+  : 'http://localhost:3000';
+```
+
+## 🔄 **Continuous Deployment**
+
+Both apps will auto-deploy when you push changes:
+
+- **Frontend changes** in `apps/web/` → Redeploys frontend only
+- **API changes** in `apps/server/` → Redeploys API only
+- **Monorepo structure** preserved and clean
+
+## 📝 **Summary**
+
+✅ **Frontend**: Static React app optimized for performance
+✅ **API**: Full Express.js server with all features
+✅ **Separate domains**: Different deployment behaviors
+✅ **Clean architecture**: No pollution of monorepo structure
+✅ **Independent scaling**: Each service optimized separately
+
+Your deployment setup is now **production-ready** with proper separation of concerns! 🎉 

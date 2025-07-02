@@ -21,18 +21,17 @@
     "typecheck": "tsc --noEmit",
     "run-prettier": "prettier src/*.ts",
     "validate-prettiness": "pnpm run run-prettier -c",
-    "make-prettier": "pnpm run run-prettier --write"
+    "make-prettier": "pnpm run run-prettier --write",
+    "vercel-deploy": "vercel --prod"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "body-parser": "^2.2.0",
     "dotenv": "^17.0.0",
     "express": "^4.16.2",
     "http-errors": "^1.7.1",
-    "morgan": "^1.9.1",
-    "pug": "^3.0.1",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "morgan": "^1.9.1"
   },
   "devDependencies": {
     "@types/express": "4.17.21",
@@ -41,10 +40,9 @@
     "@types/morgan": "1.9.9",
     "@types/node": "14.18.63",
     "@types/supertest": "2.0.16",
-    "@types/swagger-jsdoc": "^6.0.4",
-    "@types/swagger-ui-express": "^4.1.8",
     "@typescript-eslint/eslint-plugin": "4.33.0",
     "@typescript-eslint/parser": "4.33.0",
+    "@vercel/node": "^3.0.0",
     "concurrently": "6.5.1",
     "eslint": "7.32.0",
     "eslint-config-prettier": "8.10.0",
@@ -56,5 +54,6 @@
     "ts-jest": "26.5.6",
     "ts-node": "^10.9.2",
     "typescript": "4.9.5"
-  }
+  },
+  "packageManager": "pnpm@10.5.2"
 }
